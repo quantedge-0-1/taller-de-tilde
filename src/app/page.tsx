@@ -101,6 +101,7 @@ const modules = [
 
 export default function HomePage() {
   const [devocional, setDevocional] = useState<ReturnType<typeof getVersiculoDelDia> | null>(null);
+  const [versiculoRevelado, setVersiculoRevelado] = useState(false);
   const [stats, setStats] = useState([
     { value: "8", label: "Cursos activos", emoji: "📖" },
     { value: "0", label: "Diseños guardados", emoji: "💾" },
@@ -109,7 +110,10 @@ export default function HomePage() {
   ]);
 
   useEffect(() => {
-    setDevocional(getVersiculoDelDia());
+    const data = getVersiculoDelDia();
+    setDevocional(data);
+    const clave = `oracion_revelado_${data.versiculo.id}_${data.sesion}`;
+    setVersiculoRevelado(localStorage.getItem(clave) === "1");
     const diseños = JSON.parse(localStorage.getItem("rincon_designs") || "[]").length;
     const notas = JSON.parse(localStorage.getItem("rincon_notes") || "[]").length;
     setStats([
@@ -259,126 +263,173 @@ export default function HomePage() {
               className="max-w-4xl mx-auto block"
               style={{ textDecoration: "none" }}
             >
-              <div
-                style={{
-                  background: devocional.sesion === "mañana"
-                    ? "linear-gradient(135deg, #FFF8E7 0%, #FFE4A0 60%, #F5C87A 100%)"
-                    : "linear-gradient(135deg, #1A1035 0%, #2D1B69 60%, #4A2080 100%)",
-                  borderRadius: "2rem",
-                  padding: "clamp(1.75rem,4vw,2.5rem) clamp(1.75rem,4vw,3rem)",
-                  display: "flex",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  gap: "2rem",
-                  position: "relative",
-                  overflow: "hidden",
-                  boxShadow: devocional.sesion === "mañana"
-                    ? "0 8px 40px -8px rgba(196,149,106,0.30)"
-                    : "0 8px 40px -8px rgba(107,91,158,0.40)",
-                }}
-              >
-                <div
-                  aria-hidden
-                  style={{
-                    position: "absolute", top: "-3rem", right: "-3rem",
-                    width: "14rem", height: "14rem", borderRadius: "50%",
-                    background: devocional.sesion === "mañana"
-                      ? "rgba(255,220,100,0.25)"
-                      : "rgba(152,136,196,0.15)",
-                    pointerEvents: "none",
-                  }}
-                />
-
-                {/* Icono sesión */}
+              {versiculoRevelado ? (
+                /* ── Versículo ya revelado: muestra vista previa ── */
                 <div
                   style={{
-                    width: "4rem",
-                    height: "4rem",
-                    borderRadius: "50%",
                     background: devocional.sesion === "mañana"
-                      ? "rgba(196,149,106,0.25)"
-                      : "rgba(152,136,196,0.25)",
+                      ? "linear-gradient(135deg, #FFF8E7 0%, #FFE4A0 60%, #F5C87A 100%)"
+                      : "linear-gradient(135deg, #1A1035 0%, #2D1B69 60%, #4A2080 100%)",
+                    borderRadius: "2rem",
+                    padding: "clamp(1.75rem,4vw,2.5rem) clamp(1.75rem,4vw,3rem)",
                     display: "flex",
+                    flexWrap: "wrap",
                     alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    border: `2px solid ${devocional.sesion === "mañana" ? "rgba(196,149,106,0.35)" : "rgba(152,136,196,0.35)"}`,
+                    gap: "2rem",
+                    position: "relative",
+                    overflow: "hidden",
+                    boxShadow: devocional.sesion === "mañana"
+                      ? "0 8px 40px -8px rgba(196,149,106,0.30)"
+                      : "0 8px 40px -8px rgba(107,91,158,0.40)",
                   }}
                 >
-                  {devocional.sesion === "mañana" ? (
-                    <Sun className="w-6 h-6" style={{ color: "#C4956A" }} />
-                  ) : (
-                    <Moon className="w-6 h-6" style={{ color: "#9888C4" }} />
-                  )}
-                </div>
-
-                {/* Contenido */}
-                <div style={{ flex: "1 1 260px", position: "relative" }}>
+                  <div
+                    aria-hidden
+                    style={{
+                      position: "absolute", top: "-3rem", right: "-3rem",
+                      width: "14rem", height: "14rem", borderRadius: "50%",
+                      background: devocional.sesion === "mañana"
+                        ? "rgba(255,220,100,0.25)"
+                        : "rgba(152,136,196,0.15)",
+                      pointerEvents: "none",
+                    }}
+                  />
                   <div
                     style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase" as const,
+                      width: "4rem", height: "4rem", borderRadius: "50%", flexShrink: 0,
+                      background: devocional.sesion === "mañana" ? "rgba(196,149,106,0.25)" : "rgba(152,136,196,0.25)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      border: `2px solid ${devocional.sesion === "mañana" ? "rgba(196,149,106,0.35)" : "rgba(152,136,196,0.35)"}`,
+                    }}
+                  >
+                    {devocional.sesion === "mañana"
+                      ? <Sun className="w-6 h-6" style={{ color: "#C4956A" }} />
+                      : <Moon className="w-6 h-6" style={{ color: "#9888C4" }} />}
+                  </div>
+                  <div style={{ flex: "1 1 260px", position: "relative" }}>
+                    <div style={{
+                      fontFamily: "var(--font-sans)", fontSize: "0.75rem", fontWeight: 700,
+                      letterSpacing: "0.1em", textTransform: "uppercase" as const,
                       color: devocional.sesion === "mañana" ? "#C4956A" : "#9888C4",
                       marginBottom: "0.5rem",
-                    }}
-                  >
-                    ✝️ Versículo del día · {devocional.versiculo.referencia}
-                  </div>
-                  <p
-                    style={{
-                      fontFamily: "var(--font-serif)",
-                      fontSize: "clamp(1rem, 2.3vw, 1.15rem)",
-                      fontStyle: "italic",
-                      color: devocional.sesion === "mañana" ? "#4A3000" : "#EDE7F6",
-                      lineHeight: 1.65,
-                      margin: "0 0 0.5rem",
-                      overflow: "hidden",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical" as const,
-                    }}
-                  >
-                    "{devocional.versiculo.texto}"
-                  </p>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: "0.8rem",
+                    }}>
+                      ✝️ Versículo del día · {devocional.versiculo.referencia}
+                    </div>
+                    <p style={{
+                      fontFamily: "var(--font-serif)", fontSize: "clamp(1rem, 2.3vw, 1.15rem)",
+                      fontStyle: "italic", color: devocional.sesion === "mañana" ? "#4A3000" : "#EDE7F6",
+                      lineHeight: 1.65, margin: "0 0 0.5rem",
+                      overflow: "hidden", display: "-webkit-box",
+                      WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const,
+                    }}>
+                      "{devocional.versiculo.texto}"
+                    </p>
+                    <span style={{
+                      fontFamily: "var(--font-sans)", fontSize: "0.8rem", fontWeight: 500,
                       color: devocional.sesion === "mañana" ? "rgba(74,48,0,0.60)" : "rgba(237,231,246,0.55)",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {devocional.versiculo.reflexion}
-                  </span>
-                </div>
-
-                {/* CTA */}
-                <div style={{ flexShrink: 0 }}>
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
+                    }}>
+                      {devocional.versiculo.reflexion}
+                    </span>
+                  </div>
+                  <div style={{ flexShrink: 0 }}>
+                    <span style={{
+                      display: "inline-flex", alignItems: "center", gap: "0.5rem",
                       padding: "0.8rem 1.5rem",
-                      background: devocional.sesion === "mañana"
-                        ? "rgba(196,149,106,0.20)"
-                        : "rgba(152,136,196,0.25)",
+                      background: devocional.sesion === "mañana" ? "rgba(196,149,106,0.20)" : "rgba(152,136,196,0.25)",
                       border: `2px solid ${devocional.sesion === "mañana" ? "rgba(196,149,106,0.40)" : "rgba(152,136,196,0.40)"}`,
-                      borderRadius: "9999px",
-                      fontFamily: "var(--font-sans)",
-                      fontSize: "0.875rem",
-                      fontWeight: 700,
+                      borderRadius: "9999px", fontFamily: "var(--font-sans)",
+                      fontSize: "0.875rem", fontWeight: 700,
                       color: devocional.sesion === "mañana" ? "#8B5C2A" : "#C8BDE0",
-                    }}
-                  >
-                    Leer completo
-                    <ChevronRight className="w-4 h-4" />
-                  </span>
+                    }}>
+                      Leer completo
+                      <ChevronRight className="w-4 h-4" />
+                    </span>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                /* ── Versículo sellado: invita a revelar ── */
+                <div
+                  style={{
+                    background: devocional.sesion === "mañana"
+                      ? "linear-gradient(135deg, #FFF8E7 0%, #FFE4A0 60%, #F5C87A 100%)"
+                      : "linear-gradient(135deg, #1A1035 0%, #2D1B69 60%, #4A2080 100%)",
+                    borderRadius: "2rem",
+                    padding: "clamp(2rem,5vw,3rem) clamp(1.75rem,4vw,3rem)",
+                    display: "flex",
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "2rem",
+                    position: "relative",
+                    overflow: "hidden",
+                    border: `2px dashed ${devocional.sesion === "mañana" ? "rgba(196,149,106,0.50)" : "rgba(152,136,196,0.55)"}`,
+                    boxShadow: devocional.sesion === "mañana"
+                      ? "0 8px 40px -8px rgba(196,149,106,0.25)"
+                      : "0 8px 40px -8px rgba(107,91,158,0.35)",
+                  }}
+                >
+                  <div
+                    aria-hidden
+                    style={{
+                      position: "absolute", top: "-3rem", right: "-3rem",
+                      width: "14rem", height: "14rem", borderRadius: "50%",
+                      background: devocional.sesion === "mañana" ? "rgba(255,220,100,0.20)" : "rgba(152,136,196,0.12)",
+                      pointerEvents: "none",
+                    }}
+                  />
+                  {/* Cruz pulsante */}
+                  <div style={{
+                    width: "4rem", height: "4rem", borderRadius: "50%", flexShrink: 0,
+                    background: devocional.sesion === "mañana" ? "rgba(196,149,106,0.20)" : "rgba(152,136,196,0.25)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "1.75rem",
+                    animation: "sello-pulso 2.8s ease-in-out infinite",
+                    border: `2px solid ${devocional.sesion === "mañana" ? "rgba(196,149,106,0.40)" : "rgba(152,136,196,0.45)"}`,
+                  }}>
+                    ✝️
+                  </div>
+                  {/* Texto sellado */}
+                  <div style={{ flex: "1 1 220px" }}>
+                    <div style={{
+                      fontFamily: "var(--font-sans)", fontSize: "0.75rem", fontWeight: 700,
+                      letterSpacing: "0.1em", textTransform: "uppercase" as const,
+                      color: devocional.sesion === "mañana" ? "#C4956A" : "#9888C4",
+                      marginBottom: "0.5rem",
+                    }}>
+                      ✝️ Versículo de {devocional.sesion === "mañana" ? "la mañana" : "la tarde"}
+                    </div>
+                    <p style={{
+                      fontFamily: "var(--font-serif)", fontSize: "clamp(1rem, 2.3vw, 1.2rem)",
+                      fontStyle: "italic", fontWeight: 600,
+                      color: devocional.sesion === "mañana" ? "#4A3000" : "#EDE7F6",
+                      lineHeight: 1.5, margin: "0 0 0.4rem",
+                    }}>
+                      Tu palabra del día te espera sellada
+                    </p>
+                    <span style={{
+                      fontFamily: "var(--font-sans)", fontSize: "0.82rem", fontWeight: 500,
+                      color: devocional.sesion === "mañana" ? "rgba(74,48,0,0.55)" : "rgba(237,231,246,0.55)",
+                    }}>
+                      Toca para ir a revelarla
+                    </span>
+                  </div>
+                  {/* CTA */}
+                  <div style={{ flexShrink: 0 }}>
+                    <span style={{
+                      display: "inline-flex", alignItems: "center", gap: "0.5rem",
+                      padding: "0.8rem 1.5rem",
+                      background: devocional.sesion === "mañana" ? "rgba(196,149,106,0.22)" : "rgba(152,136,196,0.28)",
+                      border: `2px solid ${devocional.sesion === "mañana" ? "rgba(196,149,106,0.45)" : "rgba(152,136,196,0.45)"}`,
+                      borderRadius: "9999px", fontFamily: "var(--font-sans)",
+                      fontSize: "0.875rem", fontWeight: 700,
+                      color: devocional.sesion === "mañana" ? "#8B5C2A" : "#C8BDE0",
+                    }}>
+                      👆 Revelar
+                      <ChevronRight className="w-4 h-4" />
+                    </span>
+                  </div>
+                </div>
+              )}
             </Link>
           </AnimatedSection>
         </section>
