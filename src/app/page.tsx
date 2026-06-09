@@ -1,103 +1,622 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import AnimatedSection from "@/components/shared/AnimatedSection";
+import { BookOpen, Star, Globe, Palette, Scissors, Sparkles, Heart, MessageCircle, ChevronRight, Sun, Moon } from "lucide-react";
+import { getVersiculoDelDia } from "@/data/versiculos";
+
+const modules = [
+  {
+    href: "/escuela",
+    emoji: "📚",
+    title: "Escuela de Moda",
+    description: "Aprende costura, patronaje y confección desde cero con lecciones claras y paso a paso.",
+    color: "#9888C4",
+    bg: "rgba(152, 136, 196, 0.10)",
+    border: "rgba(152, 136, 196, 0.25)",
+    badge: "8 cursos",
+  },
+  {
+    href: "/maestros",
+    emoji: "⭐",
+    title: "Grandes Maestros",
+    description: "Descubre la historia, filosofía y técnicas de los 8 diseñadores más influyentes del mundo.",
+    color: "#C4956A",
+    bg: "rgba(196, 149, 106, 0.10)",
+    border: "rgba(196, 149, 106, 0.25)",
+    badge: "8 maestros",
+  },
+  {
+    href: "/mundo",
+    emoji: "🌍",
+    title: "Moda del Mundo",
+    description: "Viaja a París, Milán, Londres, Nueva York y Tokio y descubre su cultura de moda única.",
+    color: "#6B5B9E",
+    bg: "rgba(107, 91, 158, 0.10)",
+    border: "rgba(107, 91, 158, 0.22)",
+    badge: "5 ciudades",
+  },
+  {
+    href: "/taller",
+    emoji: "🎨",
+    title: "Taller de Diseño",
+    description: "Crea y personaliza tus propias prendas con nuestro constructor visual interactivo.",
+    color: "#9888C4",
+    bg: "rgba(152, 136, 196, 0.10)",
+    border: "rgba(152, 136, 196, 0.25)",
+    badge: "Diseño libre",
+  },
+  {
+    href: "/tejido",
+    emoji: "🧶",
+    title: "Taller de Tejido",
+    description: "Desde tus primeros puntos hasta prendas completas. Manual y con máquina, para todos los niveles.",
+    color: "#C4956A",
+    bg: "rgba(196, 149, 106, 0.10)",
+    border: "rgba(196, 149, 106, 0.25)",
+    badge: "3 niveles",
+  },
+  {
+    href: "/aprende",
+    emoji: "✨",
+    title: "Aprende Haciendo",
+    description: "Tutoriales interactivos paso a paso con proyectos reales que puedes completar en casa.",
+    color: "#6B5B9E",
+    bg: "rgba(107, 91, 158, 0.10)",
+    border: "rgba(107, 91, 158, 0.22)",
+    badge: "5 proyectos",
+  },
+  {
+    href: "/rincon",
+    emoji: "💛",
+    title: "Mi Rincón",
+    description: "Tu espacio personal para guardar diseños, notas, colecciones y todo lo que te inspira.",
+    color: "#C4956A",
+    bg: "rgba(196, 149, 106, 0.10)",
+    border: "rgba(196, 149, 106, 0.25)",
+    badge: "Tu espacio",
+  },
+  {
+    href: "/luna",
+    emoji: "🌙",
+    title: "Luna, tu asistente",
+    description: "Chatea con Luna, tu profesora virtual. Resuelve dudas, aprende técnicas y recibe inspiración.",
+    color: "#9888C4",
+    bg: "rgba(152, 136, 196, 0.10)",
+    border: "rgba(152, 136, 196, 0.25)",
+    badge: "IA disponible",
+  },
+  {
+    href: "/oracion",
+    emoji: "✝️",
+    title: "Versículo del Día",
+    description: "Un versículo bíblico profundo cada mañana a las 6:00 hs y cada tarde a las 18:00 hs.",
+    color: "#C4956A",
+    bg: "rgba(196, 149, 106, 0.10)",
+    border: "rgba(196, 149, 106, 0.25)",
+    badge: "Fe y esperanza",
+  },
+];
+
+export default function HomePage() {
+  const [devocional, setDevocional] = useState<ReturnType<typeof getVersiculoDelDia> | null>(null);
+  const [stats, setStats] = useState([
+    { value: "8", label: "Cursos activos", emoji: "📖" },
+    { value: "0", label: "Diseños guardados", emoji: "💾" },
+    { value: "0", label: "Notas creadas", emoji: "📝" },
+    { value: "∞", label: "Posibilidades creativas", emoji: "✨" },
+  ]);
+
+  useEffect(() => {
+    setDevocional(getVersiculoDelDia());
+    const diseños = JSON.parse(localStorage.getItem("rincon_designs") || "[]").length;
+    const notas = JSON.parse(localStorage.getItem("rincon_notes") || "[]").length;
+    setStats([
+      { value: "8", label: "Cursos activos", emoji: "📖" },
+      { value: String(diseños), label: "Diseños guardados", emoji: "💾" },
+      { value: String(notas), label: "Notas creadas", emoji: "📝" },
+      { value: "∞", label: "Posibilidades creativas", emoji: "✨" },
+    ]);
+  }, []);
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+    <div>
+      {/* ── Hero ──────────────────────────────────────────── */}
+      <section
+        style={{
+          background: "linear-gradient(160deg, #C8BDE0 0%, #9888C4 55%, #6B5B9E 100%)",
+          padding: "5rem 1.25rem 6rem",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          aria-hidden
+          style={{
+            position: "absolute", top: "-6rem", right: "-6rem",
+            width: "28rem", height: "28rem", borderRadius: "50%",
+            background: "rgba(255,255,255,0.07)", pointerEvents: "none",
+          }}
         />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+        <div
+          aria-hidden
+          style={{
+            position: "absolute", bottom: "-4rem", left: "-4rem",
+            width: "18rem", height: "18rem", borderRadius: "50%",
+            background: "rgba(255,255,255,0.05)", pointerEvents: "none",
+          }}
+        />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+        <div className="max-w-4xl mx-auto relative">
+          <AnimatedSection direction="up" delay={0.1}>
+            <div
+              style={{
+                background: "rgba(255,255,255,0.18)",
+                backdropFilter: "blur(16px)",
+                border: "1px solid rgba(255,255,255,0.30)",
+                borderRadius: "2rem",
+                padding: "clamp(1.75rem,5vw,3rem)",
+                marginBottom: "2.5rem",
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>💛</div>
+              <h1
+                style={{
+                  fontFamily: "var(--font-serif)",
+                  fontSize: "clamp(2rem, 5vw, 3.2rem)",
+                  fontWeight: 700,
+                  color: "#FEFEFE",
+                  marginBottom: "1.25rem",
+                  lineHeight: 1.2,
+                }}
+              >
+                Bienvenida, Tilde
+              </h1>
+              <p
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "clamp(1rem, 2.5vw, 1.175rem)",
+                  color: "rgba(255,255,255,0.92)",
+                  lineHeight: 1.75,
+                  maxWidth: "580px",
+                  margin: "0 auto 1rem",
+                }}
+              >
+                Este espacio fue creado especialmente para ti. Aquí podrás descubrir diseños maravillosos, aprender nuevas técnicas, desarrollar tu creatividad y transformar cada idea en una creación única.
+              </p>
+              <p
+                style={{
+                  fontFamily: "var(--font-serif)",
+                  fontSize: "1.25rem",
+                  fontStyle: "italic",
+                  color: "#F5E6D0",
+                  fontWeight: 500,
+                }}
+              >
+                Tu creatividad no tiene edad. ✨
+              </p>
+            </div>
+          </AnimatedSection>
+
+          <AnimatedSection direction="up" delay={0.25}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                gap: "1rem",
+              }}
+            >
+              {stats.map((s) => (
+                <div
+                  key={s.label}
+                  style={{
+                    background: "rgba(255,255,255,0.15)",
+                    backdropFilter: "blur(10px)",
+                    border: "1px solid rgba(255,255,255,0.25)",
+                    borderRadius: "1.25rem",
+                    padding: "1.25rem 1rem",
+                    textAlign: "center",
+                  }}
+                >
+                  <div style={{ fontSize: "1.75rem", marginBottom: "0.3rem" }}>{s.emoji}</div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-serif)",
+                      fontSize: "2rem",
+                      fontWeight: 700,
+                      color: "#FEFEFE",
+                      lineHeight: 1,
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    {s.value}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: "0.8rem",
+                      color: "rgba(255,255,255,0.80)",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {s.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </AnimatedSection>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      </section>
+
+      {/* ── Versículo del Día ───────────────────────────── */}
+      {devocional && (
+        <section style={{ padding: "3.5rem 1.25rem 0" }}>
+          <AnimatedSection direction="up">
+            <Link
+              href="/oracion"
+              className="max-w-4xl mx-auto block"
+              style={{ textDecoration: "none" }}
+            >
+              <div
+                style={{
+                  background: devocional.sesion === "mañana"
+                    ? "linear-gradient(135deg, #FFF8E7 0%, #FFE4A0 60%, #F5C87A 100%)"
+                    : "linear-gradient(135deg, #1A1035 0%, #2D1B69 60%, #4A2080 100%)",
+                  borderRadius: "2rem",
+                  padding: "clamp(1.75rem,4vw,2.5rem) clamp(1.75rem,4vw,3rem)",
+                  display: "flex",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  gap: "2rem",
+                  position: "relative",
+                  overflow: "hidden",
+                  boxShadow: devocional.sesion === "mañana"
+                    ? "0 8px 40px -8px rgba(196,149,106,0.30)"
+                    : "0 8px 40px -8px rgba(107,91,158,0.40)",
+                }}
+              >
+                <div
+                  aria-hidden
+                  style={{
+                    position: "absolute", top: "-3rem", right: "-3rem",
+                    width: "14rem", height: "14rem", borderRadius: "50%",
+                    background: devocional.sesion === "mañana"
+                      ? "rgba(255,220,100,0.25)"
+                      : "rgba(152,136,196,0.15)",
+                    pointerEvents: "none",
+                  }}
+                />
+
+                {/* Icono sesión */}
+                <div
+                  style={{
+                    width: "4rem",
+                    height: "4rem",
+                    borderRadius: "50%",
+                    background: devocional.sesion === "mañana"
+                      ? "rgba(196,149,106,0.25)"
+                      : "rgba(152,136,196,0.25)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    border: `2px solid ${devocional.sesion === "mañana" ? "rgba(196,149,106,0.35)" : "rgba(152,136,196,0.35)"}`,
+                  }}
+                >
+                  {devocional.sesion === "mañana" ? (
+                    <Sun className="w-6 h-6" style={{ color: "#C4956A" }} />
+                  ) : (
+                    <Moon className="w-6 h-6" style={{ color: "#9888C4" }} />
+                  )}
+                </div>
+
+                {/* Contenido */}
+                <div style={{ flex: "1 1 260px", position: "relative" }}>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase" as const,
+                      color: devocional.sesion === "mañana" ? "#C4956A" : "#9888C4",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    ✝️ Versículo del día · {devocional.versiculo.referencia}
+                  </div>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-serif)",
+                      fontSize: "clamp(1rem, 2.3vw, 1.15rem)",
+                      fontStyle: "italic",
+                      color: devocional.sesion === "mañana" ? "#4A3000" : "#EDE7F6",
+                      lineHeight: 1.65,
+                      margin: "0 0 0.5rem",
+                      overflow: "hidden",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical" as const,
+                    }}
+                  >
+                    "{devocional.versiculo.texto}"
+                  </p>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: "0.8rem",
+                      color: devocional.sesion === "mañana" ? "rgba(74,48,0,0.60)" : "rgba(237,231,246,0.55)",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {devocional.versiculo.reflexion}
+                  </span>
+                </div>
+
+                {/* CTA */}
+                <div style={{ flexShrink: 0 }}>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      padding: "0.8rem 1.5rem",
+                      background: devocional.sesion === "mañana"
+                        ? "rgba(196,149,106,0.20)"
+                        : "rgba(152,136,196,0.25)",
+                      border: `2px solid ${devocional.sesion === "mañana" ? "rgba(196,149,106,0.40)" : "rgba(152,136,196,0.40)"}`,
+                      borderRadius: "9999px",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: "0.875rem",
+                      fontWeight: 700,
+                      color: devocional.sesion === "mañana" ? "#8B5C2A" : "#C8BDE0",
+                    }}
+                  >
+                    Leer completo
+                    <ChevronRight className="w-4 h-4" />
+                  </span>
+                </div>
+              </div>
+            </Link>
+          </AnimatedSection>
+        </section>
+      )}
+
+      {/* ── Modules ─────────────────────────────────────── */}
+      <section style={{ maxWidth: "75rem", margin: "0 auto", padding: "5rem 1.25rem" }}>
+        <AnimatedSection direction="up">
+          <div style={{ textAlign: "center", marginBottom: "3.5rem" }}>
+            <span className="section-label">Tu mundo creativo</span>
+            <div className="section-divider" style={{ margin: "0.75rem auto" }} />
+            <h2
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontSize: "clamp(1.8rem, 4vw, 2.8rem)",
+                fontWeight: 700,
+                color: "#1C1410",
+              }}
+            >
+              ¿Qué quieres explorar hoy?
+            </h2>
+            <p
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: "1.0625rem",
+                color: "#8B7355",
+                maxWidth: "520px",
+                margin: "0.875rem auto 0",
+              }}
+            >
+              Cada módulo es una puerta a un universo de creatividad y aprendizaje diseñado especialmente para ti.
+            </p>
+          </div>
+        </AnimatedSection>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+            gap: "1.5rem",
+          }}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          {modules.map((mod, i) => (
+            <AnimatedSection key={mod.href} direction="up" delay={i * 0.07}>
+              <Link href={mod.href} className="card-module" style={{ height: "100%", display: "block" }}>
+                <div style={{ padding: "1.75rem", height: "100%", display: "flex", flexDirection: "column" }}>
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "3.25rem",
+                      height: "3.25rem",
+                      borderRadius: "1rem",
+                      background: mod.bg,
+                      border: `1px solid ${mod.border}`,
+                      fontSize: "1.5rem",
+                      marginBottom: "1.25rem",
+                    }}
+                  >
+                    {mod.emoji}
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                      gap: "0.5rem",
+                      marginBottom: "0.6rem",
+                    }}
+                  >
+                    <h3
+                      style={{
+                        fontFamily: "var(--font-serif)",
+                        fontSize: "1.25rem",
+                        fontWeight: 700,
+                        color: "#1C1410",
+                      }}
+                    >
+                      {mod.title}
+                    </h3>
+                    <ChevronRight className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: mod.color }} />
+                  </div>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: "0.9375rem",
+                      color: "#8B7355",
+                      lineHeight: 1.6,
+                      marginBottom: "1.25rem",
+                      flex: 1,
+                    }}
+                  >
+                    {mod.description}
+                  </p>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      padding: "0.3rem 0.85rem",
+                      background: mod.bg,
+                      color: mod.color,
+                      border: `1px solid ${mod.border}`,
+                      borderRadius: "9999px",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.07em",
+                      textTransform: "uppercase" as const,
+                      fontFamily: "var(--font-sans)",
+                    }}
+                  >
+                    {mod.badge}
+                  </span>
+                </div>
+              </Link>
+            </AnimatedSection>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Luna Banner ───────────────────────────────────── */}
+      <section style={{ padding: "0 1.25rem 5rem" }}>
+        <AnimatedSection direction="up">
+          <div
+            className="max-w-3xl mx-auto"
+            style={{
+              background: "linear-gradient(135deg, #9888C4 0%, #6B5B9E 100%)",
+              borderRadius: "2rem",
+              padding: "clamp(1.75rem,5vw,2.5rem) clamp(1.75rem,5vw,3rem)",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: "2rem",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              aria-hidden
+              style={{
+                position: "absolute", top: "-3rem", right: "-3rem",
+                width: "12rem", height: "12rem", borderRadius: "50%",
+                background: "rgba(255,255,255,0.08)",
+              }}
+            />
+            <div style={{ flex: "1 1 240px" }}>
+              <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🌙</div>
+              <h2
+                style={{
+                  fontFamily: "var(--font-serif)",
+                  fontSize: "clamp(1.5rem,3.5vw,1.9rem)",
+                  fontWeight: 700,
+                  color: "#FEFEFE",
+                  marginBottom: "0.75rem",
+                }}
+              >
+                Hola, soy Luna 💜
+              </h2>
+              <p
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "1rem",
+                  color: "rgba(255,255,255,0.90)",
+                  lineHeight: 1.65,
+                }}
+              >
+                Soy tu profesora virtual, paciente y amable. Estoy aquí para ayudarte a aprender técnicas, resolver dudas y motivarte en cada paso de tu camino creativo.
+              </p>
+            </div>
+            <div>
+              <Link
+                href="/luna"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.6rem",
+                  padding: "1rem 2rem",
+                  background: "rgba(255,255,255,0.20)",
+                  border: "2px solid rgba(255,255,255,0.40)",
+                  borderRadius: "9999px",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  color: "#FEFEFE",
+                  textDecoration: "none",
+                  backdropFilter: "blur(8px)",
+                  transition: "all 0.3s ease",
+                }}
+              >
+                Hablar con Luna
+                <ChevronRight className="w-5 h-5" />
+              </Link>
+            </div>
+          </div>
+        </AnimatedSection>
+      </section>
+
+      {/* ── Quote ─────────────────────────────────────────── */}
+      <section
+        style={{
+          background: "rgba(255,255,255,0.55)",
+          borderTop: "1px solid rgba(152,136,196,0.15)",
+          borderBottom: "1px solid rgba(152,136,196,0.15)",
+          padding: "4rem 1.25rem",
+          textAlign: "center",
+        }}
+      >
+        <AnimatedSection direction="up">
+          <span className="section-label" style={{ marginBottom: "1rem", display: "block" }}>
+            Pensamiento del día
+          </span>
+          <blockquote
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: "clamp(1.4rem, 3.5vw, 2.2rem)",
+              fontWeight: 600,
+              fontStyle: "italic",
+              color: "#2D2418",
+              maxWidth: "680px",
+              margin: "0 auto 1.25rem",
+              lineHeight: 1.4,
+            }}
+          >
+            "La moda pasa, el estilo permanece."
+          </blockquote>
+          <cite
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "0.9375rem",
+              color: "#9888C4",
+              fontStyle: "normal",
+              fontWeight: 600,
+            }}
+          >
+            — Coco Chanel
+          </cite>
+        </AnimatedSection>
+      </section>
     </div>
   );
 }
