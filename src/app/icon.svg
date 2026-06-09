@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C4956A"/>
+      <stop offset="100%" stop-color="#9888C4"/>
+    </linearGradient>
+    <linearGradient id="ndl" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#EDE8F6"/>
+      <stop offset="45%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#CEC5E0"/>
+    </linearGradient>
+    <radialGradient id="shine" cx="35%" cy="30%" r="55%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="32" fill="url(#bg)"/>
+  <!-- Inner shine overlay -->
+  <circle cx="32" cy="32" r="32" fill="url(#shine)"/>
+  <!-- Subtle rim -->
+  <circle cx="32" cy="32" r="30.5" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+
+  <!-- ── Needle (rotated +45°, eye at upper-right ~(40,24), tip at lower-left ~(14,50)) ── -->
+  <g transform="rotate(45 32 32)">
+    <!-- Needle shadow for depth -->
+    <path d="M29.5 18 Q32 16 34.5 18 L35 52 L32 58 L29 52 Z"
+          fill="rgba(0,0,0,0.18)" transform="translate(1.5,1.5)"/>
+    <!-- Needle body -->
+    <path d="M29.5 18 Q32 16 34.5 18 L35 52 L32 58 L29 52 Z"
+          fill="url(#ndl)"/>
+    <!-- Specular highlight stripe -->
+    <path d="M31.2 19 Q31.5 17 32 19 L31.8 51"
+          stroke="rgba(255,255,255,0.55)" stroke-width="1.2" fill="none"
+          stroke-linecap="round"/>
+    <!-- Eye of needle – oval hole -->
+    <ellipse cx="32" cy="22" rx="2.5" ry="4" fill="url(#bg)" opacity="0.88"/>
+    <!-- Eye interior glint -->
+    <ellipse cx="31.2" cy="20.5" rx="0.9" ry="1.4" fill="rgba(255,255,255,0.25)"/>
+  </g>
+
+  <!-- ── Thread (eye is at ~(40,24) after rotation) ── -->
+  <!-- Elegant loop through the eye -->
+  <path d="M44 18 C48 14 52 20 49 26 C46 31 40 29 40 24"
+        stroke="rgba(255,255,255,0.92)" stroke-width="2.2" fill="none"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Second subtle wrap for realism -->
+  <path d="M46 17 C49 13 53 19 50 25"
+        stroke="rgba(255,255,255,0.30)" stroke-width="1.2" fill="none"
+        stroke-linecap="round"/>
+  <!-- Thread tail drifting down-left -->
+  <path d="M40 24 C37 28 33 33 30 38 C27 43 25 47 22 52"
+        stroke="rgba(255,255,255,0.68)" stroke-width="1.9" fill="none"
+        stroke-linecap="round"/>
+  <!-- Tiny knot/dot at thread end -->
+  <circle cx="22" cy="52" r="1.4" fill="rgba(255,255,255,0.60)"/>
+</svg>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { versiculos, getVersiculoDelDia, getProximoCambio } from "@/data/versiculos";
-import { BookOpen, Sun, Moon, Clock, ChevronLeft, ChevronRight, Heart } from "lucide-react";
+import { BookOpen, Sun, Moon, Clock, Heart } from "lucide-react";
 
 function claveRevelado(id: number, sesion: string) {
   return `oracion_revelado_${id}_${sesion}`;
@@ -39,24 +39,27 @@ function useCuenta(): string {
 export default function OracionPage() {
   const [{ versiculo, sesion }, setSesionData] = useState(() => getVersiculoDelDia());
 
-  // Inicializar desde localStorage para evitar flash de sello→revelado
-  const [revelado, setRevelado] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    const { versiculo: v, sesion: s } = getVersiculoDelDia();
-    return localStorage.getItem(claveRevelado(v.id, s)) === "1";
-  });
+  // mounted evita hydration mismatch con localStorage
+  const [mounted, setMounted] = useState(false);
+  const [revelado, setRevelado] = useState(false);
   const [revelando, setRevelando] = useState(false);
+  const [animarReveal, setAnimarReveal] = useState(false);
 
-  const [indiceExplora, setIndiceExplora] = useState<number | null>(null);
   const [favoritos, setFavoritos] = useState<number[]>([]);
   const cuenta = useCuenta();
 
+  // Leer estado desde localStorage después de la hidratación
   useEffect(() => {
     const guardados = localStorage.getItem("oracion_favoritos");
     if (guardados) setFavoritos(JSON.parse(guardados));
+
+    const yaRevelado = localStorage.getItem(claveRevelado(versiculo.id, sesion)) === "1";
+    setRevelado(yaRevelado);
+    setMounted(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Cuando cambia el versículo (cada 60 s), actualizar revelado
+  // Cuando cambia el versículo (cada 60 s)
   useEffect(() => {
     const id = setInterval(() => {
       const nueva = getVersiculoDelDia();
@@ -64,51 +67,33 @@ export default function OracionPage() {
       const yaRevelado =
         localStorage.getItem(claveRevelado(nueva.versiculo.id, nueva.sesion)) === "1";
       setRevelado(yaRevelado);
-      setRevelando(false);
+      setAnimarReveal(false);
     }, 60000);
     return () => clearInterval(id);
   }, []);
 
-  const versiculoMostrado =
-    indiceExplora !== null ? versiculos[indiceExplora] : versiculo;
-
   const esMañana = sesion === "mañana";
-  const esFavorito = favoritos.includes(versiculoMostrado.id);
+  const esFavorito = favoritos.includes(versiculo.id);
 
-  // Sellado solo aplica al versículo del día (no al explorador)
-  const sellado = indiceExplora === null && !revelado;
+  const sellado = mounted && !revelado;
 
   function revelar() {
     if (revelando || revelado) return;
     setRevelando(true);
-    // Fade-out del sello: 420ms → luego mostrar revelado
     setTimeout(() => {
       setRevelado(true);
       setRevelando(false);
+      setAnimarReveal(true);
       localStorage.setItem(claveRevelado(versiculo.id, sesion), "1");
     }, 420);
   }
 
   function toggleFavorito() {
     const nuevos = esFavorito
-      ? favoritos.filter((id) => id !== versiculoMostrado.id)
-      : [...favoritos, versiculoMostrado.id];
+      ? favoritos.filter((id) => id !== versiculo.id)
+      : [...favoritos, versiculo.id];
     setFavoritos(nuevos);
     localStorage.setItem("oracion_favoritos", JSON.stringify(nuevos));
-  }
-
-  function anterior() {
-    const base = indiceExplora !== null ? indiceExplora : versiculo.id - 1;
-    setIndiceExplora((base - 1 + 100) % 100);
-  }
-
-  function siguiente() {
-    const base = indiceExplora !== null ? indiceExplora : versiculo.id - 1;
-    setIndiceExplora((base + 1) % 100);
-  }
-
-  function volverHoy() {
-    setIndiceExplora(null);
   }
 
   const gradienteSesion = esMañana
@@ -137,9 +122,7 @@ export default function OracionPage() {
           style={{
             position: "absolute", top: "-5rem", right: "-5rem",
             width: "26rem", height: "26rem", borderRadius: "50%",
-            background: esMañana
-              ? "rgba(255,220,100,0.18)"
-              : "rgba(152,136,196,0.12)",
+            background: esMañana ? "rgba(255,220,100,0.18)" : "rgba(152,136,196,0.12)",
             pointerEvents: "none",
           }}
         />
@@ -148,9 +131,7 @@ export default function OracionPage() {
           style={{
             position: "absolute", bottom: "-4rem", left: "-4rem",
             width: "18rem", height: "18rem", borderRadius: "50%",
-            background: esMañana
-              ? "rgba(255,180,50,0.12)"
-              : "rgba(107,91,158,0.15)",
+            background: esMañana ? "rgba(255,180,50,0.12)" : "rgba(107,91,158,0.15)",
             pointerEvents: "none",
           }}
         />
@@ -164,9 +145,7 @@ export default function OracionPage() {
                 alignItems: "center",
                 gap: "0.5rem",
                 padding: "0.5rem 1.25rem",
-                background: esMañana
-                  ? "rgba(255,220,100,0.35)"
-                  : "rgba(152,136,196,0.25)",
+                background: esMañana ? "rgba(255,220,100,0.35)" : "rgba(152,136,196,0.25)",
                 border: `1px solid ${esMañana ? "rgba(196,149,106,0.4)" : "rgba(152,136,196,0.4)"}`,
                 borderRadius: "9999px",
                 marginBottom: "2rem",
@@ -184,7 +163,17 @@ export default function OracionPage() {
           </AnimatedSection>
 
           <AnimatedSection direction="up" delay={0.15}>
-            {sellado ? (
+            {/* Placeholder invisible hasta hidratación */}
+            {!mounted ? (
+              <div
+                style={{
+                  minHeight: "380px",
+                  borderRadius: "2rem",
+                  background: esMañana ? "rgba(255,255,255,0.30)" : "rgba(255,255,255,0.04)",
+                  marginBottom: "2rem",
+                }}
+              />
+            ) : sellado ? (
               /* ═══════════════════════════════════════════
                  CARD SELLADA — tap para revelar
               ═══════════════════════════════════════════ */
@@ -193,11 +182,9 @@ export default function OracionPage() {
                 aria-label="Toca para revelar el versículo del día"
                 style={{
                   width: "100%",
-                  background: esMañana
-                    ? "rgba(255,255,255,0.55)"
-                    : "rgba(255,255,255,0.06)",
+                  background: esMañana ? "rgba(255,255,255,0.60)" : "rgba(255,255,255,0.07)",
                   backdropFilter: "blur(18px)",
-                  border: `2px dashed ${esMañana ? "rgba(196,149,106,0.55)" : "rgba(152,136,196,0.55)"}`,
+                  border: `2px dashed ${esMañana ? "rgba(196,149,106,0.60)" : "rgba(152,136,196,0.60)"}`,
                   borderRadius: "2rem",
                   padding: "clamp(3rem,7vw,5rem) clamp(2rem,5vw,3.5rem)",
                   marginBottom: "2rem",
@@ -209,8 +196,8 @@ export default function OracionPage() {
                   textAlign: "center" as const,
                   transition: "opacity 0.42s ease, transform 0.42s ease, box-shadow 0.2s ease",
                   boxShadow: esMañana
-                    ? "0 8px 40px -8px rgba(196,149,106,0.22)"
-                    : "0 8px 40px -8px rgba(107,91,158,0.32)",
+                    ? "0 8px 40px -8px rgba(196,149,106,0.25)"
+                    : "0 8px 40px -8px rgba(107,91,158,0.35)",
                   opacity: revelando ? 0 : 1,
                   transform: revelando ? "scale(0.94)" : "scale(1)",
                 }}
@@ -218,52 +205,48 @@ export default function OracionPage() {
                   if (!revelando) {
                     e.currentTarget.style.transform = "scale(1.015)";
                     e.currentTarget.style.boxShadow = esMañana
-                      ? "0 18px 56px -8px rgba(196,149,106,0.38)"
-                      : "0 18px 56px -8px rgba(107,91,158,0.48)";
+                      ? "0 20px 60px -8px rgba(196,149,106,0.40)"
+                      : "0 20px 60px -8px rgba(107,91,158,0.50)";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!revelando) {
                     e.currentTarget.style.transform = "scale(1)";
                     e.currentTarget.style.boxShadow = esMañana
-                      ? "0 8px 40px -8px rgba(196,149,106,0.22)"
-                      : "0 8px 40px -8px rgba(107,91,158,0.32)";
+                      ? "0 8px 40px -8px rgba(196,149,106,0.25)"
+                      : "0 8px 40px -8px rgba(107,91,158,0.35)";
                   }
                 }}
-                onMouseDown={(e) => {
-                  e.currentTarget.style.transform = "scale(0.985)";
-                }}
-                onMouseUp={(e) => {
-                  e.currentTarget.style.transform = "scale(1)";
-                }}
+                onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.985)"; }}
+                onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
               >
-                {/* Sello / Cruz animada */}
+                {/* Cruz / sello animado */}
                 <div
                   style={{
-                    width: "6.5rem",
-                    height: "6.5rem",
+                    width: "7rem",
+                    height: "7rem",
                     borderRadius: "50%",
                     background: esMañana
-                      ? "linear-gradient(135deg, rgba(196,149,106,0.22), rgba(245,200,122,0.32))"
-                      : "linear-gradient(135deg, rgba(107,91,158,0.38), rgba(152,136,196,0.22))",
-                    border: `2.5px solid ${esMañana ? "rgba(196,149,106,0.55)" : "rgba(152,136,196,0.55)"}`,
+                      ? "linear-gradient(135deg, rgba(196,149,106,0.25), rgba(245,200,122,0.35))"
+                      : "linear-gradient(135deg, rgba(107,91,158,0.40), rgba(152,136,196,0.25))",
+                    border: `2.5px solid ${esMañana ? "rgba(196,149,106,0.60)" : "rgba(152,136,196,0.60)"}`,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "3rem",
+                    fontSize: "3.25rem",
                     animation: "sello-pulso 2.8s ease-in-out infinite",
                   }}
                 >
                   ✝️
                 </div>
 
-                {/* Texto principal */}
+                {/* Texto */}
                 <div>
                   <p
                     style={{
                       fontFamily: "var(--font-serif)",
-                      fontSize: "clamp(1.15rem, 2.8vw, 1.6rem)",
-                      fontWeight: 600,
+                      fontSize: "clamp(1.2rem, 3vw, 1.7rem)",
+                      fontWeight: 700,
                       fontStyle: "italic",
                       color: colorTexto,
                       marginBottom: "0.6rem",
@@ -275,7 +258,8 @@ export default function OracionPage() {
                   <p
                     style={{
                       fontFamily: "var(--font-sans)",
-                      fontSize: "0.9375rem",
+                      fontSize: "1rem",
+                      fontWeight: 500,
                       color: colorSub,
                       lineHeight: 1.6,
                     }}
@@ -285,15 +269,7 @@ export default function OracionPage() {
                 </div>
 
                 {/* Líneas decorativas como texto oculto */}
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "0.55rem",
-                    width: "100%",
-                    maxWidth: "18rem",
-                  }}
-                >
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", width: "100%", maxWidth: "18rem" }}>
                   {[100, 82, 68, 90, 58].map((w, i) => (
                     <div
                       key={i}
@@ -302,61 +278,59 @@ export default function OracionPage() {
                         width: `${w}%`,
                         borderRadius: "9999px",
                         background: esMañana
-                          ? `rgba(196,149,106,${0.13 + i * 0.025})`
-                          : `rgba(152,136,196,${0.16 + i * 0.025})`,
+                          ? `rgba(196,149,106,${0.14 + i * 0.025})`
+                          : `rgba(152,136,196,${0.18 + i * 0.025})`,
                         margin: "0 auto",
                       }}
                     />
                   ))}
                 </div>
 
-                {/* Botón de interacción */}
+                {/* Hint de interacción */}
                 <div
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "0.5rem",
-                    padding: "0.65rem 1.6rem",
-                    background: esMañana
-                      ? "rgba(196,149,106,0.20)"
-                      : "rgba(152,136,196,0.25)",
-                    border: `1.5px solid ${esMañana ? "rgba(196,149,106,0.45)" : "rgba(152,136,196,0.45)"}`,
+                    padding: "0.7rem 1.75rem",
+                    background: esMañana ? "rgba(196,149,106,0.22)" : "rgba(152,136,196,0.28)",
+                    border: `1.5px solid ${esMañana ? "rgba(196,149,106,0.50)" : "rgba(152,136,196,0.50)"}`,
                     borderRadius: "9999px",
                     fontFamily: "var(--font-sans)",
-                    fontSize: "0.925rem",
+                    fontSize: "1rem",
                     fontWeight: 700,
                     color: colorAccent,
                     letterSpacing: "0.04em",
                   }}
                 >
-                  <span style={{ fontSize: "1.05rem" }}>👆</span>
+                  <span style={{ fontSize: "1.1rem" }}>👆</span>
                   Tocar para revelar
                 </div>
               </button>
             ) : (
               /* ═══════════════════════════════════════════
-                 CARD REVELADA — con animación de entrada
+                 CARD REVELADA
               ═══════════════════════════════════════════ */
               <div
                 style={{
-                  background: esMañana
-                    ? "rgba(255,255,255,0.55)"
-                    : "rgba(255,255,255,0.06)",
+                  background: esMañana ? "rgba(255,255,255,0.60)" : "rgba(255,255,255,0.07)",
                   backdropFilter: "blur(18px)",
-                  border: `1px solid ${esMañana ? "rgba(196,149,106,0.25)" : "rgba(152,136,196,0.25)"}`,
+                  border: `1px solid ${esMañana ? "rgba(196,149,106,0.28)" : "rgba(152,136,196,0.28)"}`,
                   borderRadius: "2rem",
                   padding: "clamp(2rem,5vw,3.5rem)",
                   marginBottom: "2rem",
                   position: "relative",
-                  // Keyframe solo en el primer render post-reveal (revelado recién puesto en true)
-                  animation: "revelar-versiculo 0.55s cubic-bezier(0.22,1,0.36,1) both",
+                  // Animación solo cuando se acaba de revelar (no en carga de página)
+                  animation: animarReveal
+                    ? "revelar-versiculo 0.55s cubic-bezier(0.22,1,0.36,1) both"
+                    : undefined,
                 }}
               >
                 {/* Referencia */}
                 <div
                   style={{
                     fontFamily: "var(--font-sans)",
-                    fontSize: "0.85rem",
+                    fontSize: "0.9rem",
                     fontWeight: 700,
                     letterSpacing: "0.1em",
                     textTransform: "uppercase" as const,
@@ -368,37 +342,37 @@ export default function OracionPage() {
                   }}
                 >
                   <BookOpen className="w-4 h-4" />
-                  {versiculoMostrado.referencia}
+                  {versiculo.referencia}
                 </div>
 
                 {/* Libro */}
                 <div
                   style={{
                     fontFamily: "var(--font-serif)",
-                    fontSize: "0.95rem",
+                    fontSize: "1.05rem",
                     fontStyle: "italic",
                     color: colorSub,
                     marginBottom: "1.5rem",
                   }}
                 >
-                  {versiculoMostrado.libro}
+                  {versiculo.libro}
                 </div>
 
-                {/* Texto bíblico */}
+                {/* Texto bíblico — más grande y más grueso */}
                 <blockquote
                   style={{
                     fontFamily: "var(--font-serif)",
-                    fontSize: "clamp(1.05rem, 2.5vw, 1.35rem)",
-                    fontWeight: 500,
+                    fontSize: "clamp(1.2rem, 2.8vw, 1.55rem)",
+                    fontWeight: 600,
                     color: colorTexto,
-                    lineHeight: 1.8,
+                    lineHeight: 1.85,
                     marginBottom: "2rem",
                     borderLeft: `4px solid ${colorAccent}`,
                     paddingLeft: "1.5rem",
                     fontStyle: "italic",
                   }}
                 >
-                  "{versiculoMostrado.texto}"
+                  "{versiculo.texto}"
                 </blockquote>
 
                 {/* Tema */}
@@ -406,14 +380,12 @@ export default function OracionPage() {
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    padding: "0.35rem 1rem",
-                    background: esMañana
-                      ? "rgba(196,149,106,0.15)"
-                      : "rgba(152,136,196,0.20)",
+                    padding: "0.4rem 1.1rem",
+                    background: esMañana ? "rgba(196,149,106,0.15)" : "rgba(152,136,196,0.20)",
                     border: `1px solid ${esMañana ? "rgba(196,149,106,0.30)" : "rgba(152,136,196,0.35)"}`,
                     borderRadius: "9999px",
                     fontFamily: "var(--font-sans)",
-                    fontSize: "0.8rem",
+                    fontSize: "0.82rem",
                     fontWeight: 700,
                     color: colorAccent,
                     letterSpacing: "0.06em",
@@ -421,26 +393,25 @@ export default function OracionPage() {
                     marginBottom: "1.5rem",
                   }}
                 >
-                  {versiculoMostrado.tema}
+                  {versiculo.tema}
                 </div>
 
                 {/* Reflexión */}
                 <div
                   style={{
-                    background: esMañana
-                      ? "rgba(196,149,106,0.10)"
-                      : "rgba(152,136,196,0.12)",
+                    background: esMañana ? "rgba(196,149,106,0.10)" : "rgba(152,136,196,0.12)",
                     borderRadius: "1rem",
-                    padding: "1.25rem 1.5rem",
+                    padding: "1.375rem 1.5rem",
                     marginBottom: "1.5rem",
                   }}
                 >
                   <p
                     style={{
                       fontFamily: "var(--font-sans)",
-                      fontSize: "1rem",
+                      fontSize: "1.0625rem",
+                      fontWeight: 500,
                       color: colorSub,
-                      lineHeight: 1.7,
+                      lineHeight: 1.75,
                       margin: 0,
                     }}
                   >
@@ -449,12 +420,12 @@ export default function OracionPage() {
                         fontWeight: 700,
                         color: colorAccent,
                         fontFamily: "var(--font-serif)",
-                        fontSize: "1.05rem",
+                        fontSize: "1.1rem",
                       }}
                     >
                       Reflexión:{" "}
                     </span>
-                    {versiculoMostrado.reflexion}
+                    {versiculo.reflexion}
                   </p>
                 </div>
 
@@ -465,14 +436,14 @@ export default function OracionPage() {
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "0.5rem",
-                    padding: "0.65rem 1.5rem",
+                    padding: "0.7rem 1.6rem",
                     background: esFavorito
                       ? (esMañana ? "rgba(196,149,106,0.25)" : "rgba(152,136,196,0.30)")
                       : "transparent",
                     border: `2px solid ${esFavorito ? colorAccent : (esMañana ? "rgba(196,149,106,0.35)" : "rgba(152,136,196,0.35)")}`,
                     borderRadius: "9999px",
                     fontFamily: "var(--font-sans)",
-                    fontSize: "0.9rem",
+                    fontSize: "0.9375rem",
                     fontWeight: 600,
                     color: esFavorito ? colorAccent : colorSub,
                     cursor: "pointer",
@@ -498,14 +469,12 @@ export default function OracionPage() {
                 justifyContent: "center",
                 gap: "0.75rem",
                 padding: "1rem 2rem",
-                background: esMañana
-                  ? "rgba(255,255,255,0.40)"
-                  : "rgba(255,255,255,0.06)",
+                background: esMañana ? "rgba(255,255,255,0.40)" : "rgba(255,255,255,0.06)",
                 backdropFilter: "blur(10px)",
                 border: `1px solid ${esMañana ? "rgba(196,149,106,0.25)" : "rgba(152,136,196,0.25)"}`,
                 borderRadius: "9999px",
                 fontFamily: "var(--font-sans)",
-                fontSize: "0.875rem",
+                fontSize: "0.9rem",
                 color: colorSub,
                 fontWeight: 500,
                 flexWrap: "wrap" as const,
@@ -525,124 +494,7 @@ export default function OracionPage() {
             </div>
           </AnimatedSection>
 
-          {/* Indicador si se está explorando */}
-          {indiceExplora !== null && (
-            <AnimatedSection direction="up" delay={0.1}>
-              <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
-                <button
-                  onClick={volverHoy}
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: "0.9rem",
-                    color: colorAccent,
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                    fontWeight: 600,
-                  }}
-                >
-                  Volver al versículo de hoy
-                </button>
-              </div>
-            </AnimatedSection>
-          )}
         </div>
-      </section>
-
-      {/* ── Navegador de versículos ──────────────────────── */}
-      <section
-        style={{
-          maxWidth: "48rem",
-          margin: "0 auto",
-          padding: "3rem 1.25rem",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "1rem",
-        }}
-      >
-        <AnimatedSection direction="up">
-          <span
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase" as const,
-              color: "#C4956A",
-            }}
-          >
-            Explorar los 100 versículos
-          </span>
-        </AnimatedSection>
-
-        <AnimatedSection direction="up" delay={0.1}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "1.5rem",
-              flexWrap: "wrap" as const,
-              justifyContent: "center",
-            }}
-          >
-            <button
-              onClick={anterior}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                padding: "0.75rem 1.5rem",
-                background: "rgba(152,136,196,0.10)",
-                border: "1px solid rgba(152,136,196,0.25)",
-                borderRadius: "9999px",
-                fontFamily: "var(--font-sans)",
-                fontSize: "0.9rem",
-                fontWeight: 600,
-                color: "#6B5B9E",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-              }}
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Anterior
-            </button>
-
-            <span
-              style={{
-                fontFamily: "var(--font-serif)",
-                fontSize: "1rem",
-                color: "#8B7355",
-                fontStyle: "italic",
-              }}
-            >
-              {versiculoMostrado.id} / 100
-            </span>
-
-            <button
-              onClick={siguiente}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                padding: "0.75rem 1.5rem",
-                background: "rgba(152,136,196,0.10)",
-                border: "1px solid rgba(152,136,196,0.25)",
-                borderRadius: "9999px",
-                fontFamily: "var(--font-sans)",
-                fontSize: "0.9rem",
-                fontWeight: 600,
-                color: "#6B5B9E",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-              }}
-            >
-              Siguiente
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </AnimatedSection>
       </section>
 
       {/* ── Favoritos ────────────────────────────────────── */}
@@ -653,10 +505,8 @@ export default function OracionPage() {
               <span
                 style={{
                   fontFamily: "var(--font-sans)",
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase" as const,
+                  fontSize: "0.75rem", fontWeight: 700,
+                  letterSpacing: "0.12em", textTransform: "uppercase" as const,
                   color: "#C4956A",
                 }}
               >
@@ -664,11 +514,9 @@ export default function OracionPage() {
               </span>
               <div
                 style={{
-                  width: "3rem",
-                  height: "2px",
+                  width: "3rem", height: "2px",
                   background: "linear-gradient(90deg, #C4956A, #9888C4)",
-                  margin: "0.75rem auto",
-                  borderRadius: "9999px",
+                  margin: "0.75rem auto", borderRadius: "9999px",
                 }}
               />
             </div>
@@ -686,33 +534,23 @@ export default function OracionPage() {
               if (!v) return null;
               return (
                 <AnimatedSection key={favId} direction="up" delay={i * 0.07}>
-                  <button
-                    onClick={() => setIndiceExplora(v.id - 1)}
+                  <div
                     style={{
-                      display: "block",
-                      width: "100%",
-                      textAlign: "left",
+                      display: "block", width: "100%", textAlign: "left",
                       padding: "1.5rem",
                       background: "rgba(255,255,255,0.70)",
                       border: "1px solid rgba(196,149,106,0.20)",
                       borderRadius: "1.5rem",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
                       boxShadow: "0 2px 12px -4px rgba(152,136,196,0.12)",
                     }}
                   >
                     <div
                       style={{
                         fontFamily: "var(--font-sans)",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase" as const,
-                        color: "#C4956A",
-                        marginBottom: "0.5rem",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.4rem",
+                        fontSize: "0.75rem", fontWeight: 700,
+                        letterSpacing: "0.08em", textTransform: "uppercase" as const,
+                        color: "#C4956A", marginBottom: "0.5rem",
+                        display: "flex", alignItems: "center", gap: "0.4rem",
                       }}
                     >
                       <Heart className="w-3 h-3" style={{ fill: "#C4956A" }} />
@@ -721,9 +559,8 @@ export default function OracionPage() {
                     <p
                       style={{
                         fontFamily: "var(--font-serif)",
-                        fontSize: "0.95rem",
-                        fontStyle: "italic",
-                        color: "#2D2418",
+                        fontSize: "1rem", fontWeight: 500,
+                        fontStyle: "italic", color: "#2D2418",
                         lineHeight: 1.65,
                         overflow: "hidden",
                         display: "-webkit-box",
@@ -734,7 +571,7 @@ export default function OracionPage() {
                     >
                       "{v.texto}"
                     </p>
-                  </button>
+                  </div>
                 </AnimatedSection>
               );
             })}
@@ -757,9 +594,7 @@ export default function OracionPage() {
               style={{
                 fontFamily: "var(--font-serif)",
                 fontSize: "clamp(1.5rem, 3.5vw, 2rem)",
-                fontWeight: 700,
-                color: "#EDE7F6",
-                marginBottom: "1rem",
+                fontWeight: 700, color: "#EDE7F6", marginBottom: "1rem",
               }}
             >
               Un versículo para cada momento del día
@@ -767,10 +602,9 @@ export default function OracionPage() {
             <p
               style={{
                 fontFamily: "var(--font-sans)",
-                fontSize: "1rem",
-                color: "rgba(237,231,246,0.75)",
-                lineHeight: 1.7,
-                marginBottom: "2rem",
+                fontSize: "1.0625rem", fontWeight: 500,
+                color: "rgba(237,231,246,0.80)",
+                lineHeight: 1.7, marginBottom: "2rem",
               }}
             >
               Cada mañana a las 6:00 hs y cada tarde a las 18:00 hs, un nuevo versículo
@@ -778,10 +612,8 @@ export default function OracionPage() {
             </p>
             <div
               style={{
-                display: "flex",
-                justifyContent: "center",
-                gap: "2rem",
-                flexWrap: "wrap" as const,
+                display: "flex", justifyContent: "center",
+                gap: "2rem", flexWrap: "wrap" as const,
               }}
             >
               {[
@@ -791,36 +623,19 @@ export default function OracionPage() {
                 <div
                   key={hora}
                   style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: "0.5rem",
+                    display: "flex", flexDirection: "column",
+                    alignItems: "center", gap: "0.5rem",
                     padding: "1.5rem 2rem",
                     background: "rgba(255,255,255,0.06)",
                     border: "1px solid rgba(152,136,196,0.25)",
-                    borderRadius: "1.5rem",
-                    minWidth: "140px",
+                    borderRadius: "1.5rem", minWidth: "140px",
                   }}
                 >
                   <div style={{ fontSize: "2rem" }}>{icon}</div>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-serif)",
-                      fontSize: "1.5rem",
-                      fontWeight: 700,
-                      color: "#9888C4",
-                    }}
-                  >
+                  <div style={{ fontFamily: "var(--font-serif)", fontSize: "1.5rem", fontWeight: 700, color: "#9888C4" }}>
                     {hora}
                   </div>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: "0.8rem",
-                      color: "rgba(237,231,246,0.60)",
-                      fontWeight: 500,
-                    }}
-                  >
+                  <div style={{ fontFamily: "var(--font-sans)", fontSize: "0.8rem", color: "rgba(237,231,246,0.60)", fontWeight: 500 }}>
                     {label}
                   </div>
                 </div>
